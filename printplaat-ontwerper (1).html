@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experimenteerprintplaat Ontwerper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1a13;
+    --surface: #172119;
+    --surface2: #1e2d22;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --green: #4ade80;
+    --green-dim: #22c55e;
+    --copper: #c8a84b;
+    --text: #e8f5e9;
+    --text-muted: #6b8f72;
+    --accent: #4ade80;
+    --board-bg: #1a6b38;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+
+  header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  #main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  #toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .tg { display: flex; gap: 4px; align-items: center; }
+
+  .sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border2);
+    margin: 0 4px;
+  }
+
+  label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  button {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+
+  button:hover { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); }
+  button.active { background: var(--green); color: #0f1a13; border-color: var(--green); font-weight: 600; }
+  button.danger { color: #f87171; border-color: rgba(248,113,113,0.3); }
+  button.danger:hover { background: rgba(248,113,113,0.08); }
+  button.fp-cat.active { background: rgba(74,222,128,0.15); color: var(--green); border-color: rgba(74,222,128,0.5); font-weight:600; }
+
+  select, input[type=number] {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 6px;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    background: var(--surface2);
+    color: var(--text);
+    width: 56px;
+    cursor: pointer;
+  }
+
+  select:focus, input[type=number]:focus { outline: 1px solid var(--green); }
+
+  .colbtn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+  }
+
+  .colbtn:hover { transform: scale(1.15); }
+  .colbtn.sel { border-color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.4); }
+
+  #canvas-wrap {
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--board-bg);
+    display: block;
+    width: 100%;
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+  }
+
+  #status {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 4px 2px;
+    letter-spacing: 0.03em;
+  }
+
+  #legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .legend-line {
+    width: 20px; height: 3px;
+    border-radius: 2px;
+  }
+
+  .legend-rect {
+    width: 16px; height: 10px;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ Printplaat Ontwerper</h1>
+  <span>Experimenteerprintplaat — sleep banen &amp; eilanden</span>
+</header>
+
+<div id="main">
+  <div id="toolbar">
+    <div class="tg">
+      <label>Kolommen</label>
+      <input type="number" id="inp-cols" value="30" min="5" max="60" step="1">
+      <label>Rijen</label>
+      <input type="number" id="inp-rows" value="20" min="5" max="40" step="1">
+      <button id="btn-apply">✓ Toepassen</button>
+    </div>
+    <div class="sep"></div>
+    <div class="tg">
+      <label>Tool</label>
+      <button id="btn-wire" class="active">━ Baan</button>
+      <button id="btn-island">▪ Eiland</button>
+      <button id="btn-comp">⊡ Component plaatsen</button>
+      <button id="btn-erase">⌫ Wissen</button>
+    </div>
+    <div class="sep"></div>
+    <div class="tg">
+      <label>Kleur</label>
+      <span class="colbtn sel" style="background:#e74c3c" data-col="#e74c3c"></span>
+      <span class="colbtn" style="background:#3498db" data-col="#3498db"></span>
+      <span class="colbtn" style="background:#f1c40f" data-col="#f1c40f"></span>
+      <span class="colbtn" style="background:#2ecc71" data-col="#2ecc71"></span>
+      <span class="colbtn" style="background:#e67e22" data-col="#e67e22"></span>
+      <span class="colbtn" style="background:#ecf0f1" data-col="#ecf0f1"></span>
+      <span class="colbtn" style="background:#9b59b6" data-col="#9b59b6"></span>
+    </div>
+    <div class="sep"></div>
+    <div class="tg">
+      <label>Dikte</label>
+      <select id="wire-width">
+        <option value="2">Dun</option>
+        <option value="4" selected>Normaal</option>
+        <option value="7">Dik</option>
+      </select>
+    </div>
+    <div class="sep"></div>
+    <div class="tg">
+      <button id="btn-undo" title="Ongedaan maken">↩ Undo</button>
+      <button id="btn-clear" class="danger" title="Alles wissen">✕ Wis alles</button>
+    </div>
+  </div>
+
+  <div id="footprint-panel" style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Standaard Footprints</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;" id="fp-category-btns">
+        <button class="fp-cat active" data-cat="ic" style="font-size:11px;padding:3px 8px;">IC / Logic</button>
+        <button class="fp-cat" data-cat="passive" style="font-size:11px;padding:3px 8px;">Passief</button>
+        <button class="fp-cat" data-cat="transistor" style="font-size:11px;padding:3px 8px;">Transistor</button>
+        <button class="fp-cat" data-cat="connector" style="font-size:11px;padding:3px 8px;">Connector</button>
+        <button class="fp-cat" data-cat="power" style="font-size:11px;padding:3px 8px;">Voeding</button>
+        <button class="fp-cat" data-cat="mcu" style="font-size:11px;padding:3px 8px;">MCU</button>
+      </div>
+    </div>
+    <div id="fp-list" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+  </div>
+
+  <div id="comp-panel" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+    <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Component instellen:</span>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label>Naam</label>
+      <input type="text" id="comp-label" value="IC1" maxlength="6" style="width:54px;font-family:'DM Mono',monospace;font-size:12px;padding:3px 6px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label>Pinnen</label>
+      <input type="number" id="comp-pins" value="8" min="1" max="40" step="1" style="width:52px;">
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label>Richting</label>
+      <select id="comp-dir" style="width:auto;">
+        <option value="h">Horizontaal (links/rechts)</option>
+        <option value="v">Verticaal (boven/onder)</option>
+        <option value="1row">1 rij (enkelvoudig)</option>
+      </select>
+    </div>
+    <div id="gap-group" style="display:flex;align-items:center;gap:4px">
+      <label>Afstand rijen</label>
+      <input type="number" id="comp-gap" value="2" min="1" max="20" step="1" style="width:52px;" title="Aantal gaatjes tussen de 2 pinrijen">
+      <label style="font-size:10px;color:var(--text-muted)">gaatjes</label>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <label>Kleur</label>
+      <select id="comp-color" style="width:auto;">
+        <option value="#2c3e50">Donkerblauw (IC)</option>
+        <option value="#8e44ad">Paars (module)</option>
+        <option value="#16a085">Groen (transistor)</option>
+        <option value="#c0392b">Rood (condensator)</option>
+        <option value="#d35400">Oranje (weerstand)</option>
+        <option value="#7f8c8d">Grijs (connector)</option>
+      </select>
+    </div>
+    <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);" id="comp-preview-txt"></span>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="pcb"></canvas>
+  </div>
+
+  <div id="status">Kies een gereedschap en klik op de printplaat om te beginnen.</div>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#c8a84b;border:1px solid #888"></div>Gaatje</div>
+    <div class="legend-item"><div class="legend-line" style="background:#e74c3c"></div>Baan</div>
+    <div class="legend-item"><div class="legend-rect" style="background:rgba(232,200,74,0.7);border:1px solid rgba(255,255,255,0.3)"></div>Eiland</div>
+    <div class="legend-item"><div class="legend-rect" style="background:#2c3e50;border:1px solid rgba(255,255,255,0.3)"></div>Component</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:4px 14px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+    <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;width:100%;margin-bottom:2px;">Sneltoetsen</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">W</kbd> Baan</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">I</kbd> Eiland</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">C</kbd> Component</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">E</kbd> Wissen</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">R</kbd> Roteer</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">Ctrl+Z</kbd> Undo</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">1–7</kbd> Kleur</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">-</kbd> / <kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">+</kbd> Dikte</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)"><kbd style="background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:10px;">Esc</kbd> Annuleer</span>
+  </div>
+</div>
+
+<!-- Footprint bewerk-modal -->
+<div id="fp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:340px;max-width:95vw;display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;" id="fp-modal-title">Footprint bewerken</span>
+      <button id="fp-modal-close" style="padding:2px 8px;font-size:14px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Naam</label><input type="text" id="fp-edit-name" maxlength="20" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Label</label><input type="text" id="fp-edit-label" maxlength="8" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Beschrijving</label><input type="text" id="fp-edit-desc" maxlength="40" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Pinnen</label><input type="number" id="fp-edit-pins" min="1" max="64" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);"></div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Richting</label>
+        <select id="fp-edit-dir" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
+          <option value="h">Horizontaal (links/rechts)</option>
+          <option value="v">Verticaal (boven/onder)</option>
+          <option value="1row">1 rij (enkelvoudig)</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Afstand</label><input type="number" id="fp-edit-gap" min="1" max="20" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);"><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);">gaatjes</span></div>
+      <div style="display:flex;align-items:center;gap:8px;"><label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Kleur</label>
+        <select id="fp-edit-color" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
+          <option value="#2c3e50">Donkerblauw (IC)</option>
+          <option value="#8e44ad">Paars (module)</option>
+          <option value="#16a085">Groen (transistor)</option>
+          <option value="#c0392b">Rood (condensator)</option>
+          <option value="#d35400">Oranje (weerstand)</option>
+          <option value="#7f8c8d">Grijs (connector)</option>
+          <option value="#27ae60">Groen (MCU/module)</option>
+          <option value="#2980b9">Blauw (connector)</option>
+          <option value="#e74c3c">Rood (LED/diode)</option>
+          <option value="#e67e22">Oranje</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+      <button id="fp-modal-delete" class="danger" style="margin-right:auto;">✕ Verwijder</button>
+      <button id="fp-modal-cancel">Annuleer</button>
+      <button id="fp-modal-save" style="background:var(--green);color:#0f1a13;border-color:var(--green);font-weight:700;">✓ Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let COLS = 30, ROWS = 20, CELL = 22;
+
+const canvas = document.getElementById('pcb');
+const ctx = canvas.getContext('2d');
+
+let tool = 'wire';
+let activeColor = '#e74c3c';
+let wireWidth = 4;
+let drawing = false;
+let startHole = null;
+let mouseHole = null;
+
+let wires = [], islands = [], components = [], history = [];
+
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  CELL = Math.max(10, Math.floor((wrap.clientWidth - 2) / COLS));
+  canvas.width = CELL * COLS;
+  canvas.height = CELL * ROWS;
+  render();
+}
+
+function hp(c, r) { return { x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 }; }
+
+function nearHole(px, py) {
+  return {
+    c: Math.max(0, Math.min(COLS - 1, Math.round((px - CELL / 2) / CELL))),
+    r: Math.max(0, Math.min(ROWS - 1, Math.round((py - CELL / 2) / CELL)))
+  };
+}
+
+function evPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+  const src = e.touches ? e.touches[0] || e.changedTouches[0] : e;
+  return { px: (src.clientX - rect.left) * sx, py: (src.clientY - rect.top) * sy };
+}
+
+function islandRect(c1, r1, c2, r2) {
+  const c = Math.min(c1, c2), r = Math.min(r1, r2);
+  const w = Math.abs(c2 - c1) + 1, h = Math.abs(r2 - r1) + 1;
+  return { c, r, w, h };
+}
+
+function drawBoard() {
+  ctx.fillStyle = '#1a6b38';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const HR = Math.max(1.5, CELL * 0.09), CR = Math.max(2.5, CELL * 0.18);
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const { x, y } = hp(c, r);
+      ctx.beginPath(); ctx.arc(x, y, CR, 0, Math.PI * 2);
+      ctx.fillStyle = '#c8a84b'; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, HR, 0, Math.PI * 2);
+      ctx.fillStyle = '#0a3018'; ctx.fill();
+    }
+  }
+}
+
+function drawIslandShape(isl, alpha) {
+  const pad = Math.max(1, CELL * 0.08);
+  const x = isl.c * CELL + pad, y = isl.r * CELL + pad;
+  const pw = isl.w * CELL - pad * 2, ph = isl.h * CELL - pad * 2;
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.fillStyle = isl.color;
+  ctx.beginPath(); ctx.roundRect(x, y, pw, ph, 3);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 0.5; ctx.stroke();
+  ctx.restore();
+}
+
+function drawWire(w, preview) {
+  const a = hp(w.c1, w.r1), b = hp(w.c2, w.r2);
+  ctx.save();
+  ctx.strokeStyle = w.color; ctx.lineWidth = w.width;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalAlpha = preview ? 0.5 : 1;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y);
+  if (w.c1 === w.c2 || w.r1 === w.r2) { ctx.lineTo(b.x, b.y); }
+  else { ctx.lineTo(b.x, a.y); ctx.lineTo(b.x, b.y); }
+  ctx.stroke();
+  [a, b].forEach(pt => {
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, w.width / 2 + 1, 0, Math.PI * 2);
+    ctx.fillStyle = w.color; ctx.fill();
+  });
+  ctx.restore();
+}
+
+function getCompConfig() {
+  const dir = document.getElementById('comp-dir').value;
+  return {
+    label: document.getElementById('comp-label').value || 'IC',
+    pins: Math.max(1, parseInt(document.getElementById('comp-pins').value) || 8),
+    dir,
+    gap: Math.max(1, parseInt(document.getElementById('comp-gap').value) || 2),
+    color: document.getElementById('comp-color').value
+  };
+}
+
+function updateGapVisibility() {
+  const dir = document.getElementById('comp-dir').value;
+  document.getElementById('gap-group').style.display = dir === '1row' ? 'none' : 'flex';
+}
+
+function updateCompPreview() {
+  const cfg = getCompConfig();
+  updateGapVisibility();
+  const half = Math.ceil(cfg.pins / 2);
+  let desc = '';
+  if (cfg.dir === 'h') desc = `${cfg.pins} pins — ${half} links, ${Math.floor(cfg.pins/2)} rechts — afstand: ${cfg.gap} gaatjes`;
+  else if (cfg.dir === 'v') desc = `${cfg.pins} pins — ${half} boven, ${Math.floor(cfg.pins/2)} onder — afstand: ${cfg.gap} gaatjes`;
+  else desc = `${cfg.pins} pins in 1 rij horizontaal`;
+  document.getElementById('comp-preview-txt').textContent = '→ ' + desc;
+}
+
+['comp-label','comp-pins','comp-dir','comp-gap','comp-color'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateCompPreview);
+  document.getElementById(id).addEventListener('change', updateCompPreview);
+});
+
+function compPins(co) {
+  const pins = [];
+  const n = co.pins, dir = co.dir, gap = co.gap || 2;
+  if (dir === '1row') {
+    for (let i = 0; i < n; i++) pins.push({ c: co.c + i, r: co.r, num: i + 1 });
+  } else if (dir === 'h') {
+    const half = Math.ceil(n / 2);
+    for (let i = 0; i < half; i++) pins.push({ c: co.c, r: co.r + i, num: i + 1, side: 'L' });
+    for (let i = 0; i < Math.floor(n / 2); i++) pins.push({ c: co.c + gap + 1, r: co.r + (Math.floor(n/2) - 1 - i), num: half + i + 1, side: 'R' });
+  } else {
+    const half = Math.ceil(n / 2);
+    for (let i = 0; i < half; i++) pins.push({ c: co.c + i, r: co.r, num: i + 1, side: 'T' });
+    for (let i = 0; i < Math.floor(n / 2); i++) pins.push({ c: co.c + (Math.floor(n/2) - 1 - i), r: co.r + gap + 1, num: half + i + 1, side: 'B' });
+  }
+  return pins;
+}
+
+function compBounds(cfg, c, r) {
+  const n = cfg.pins, dir = cfg.dir, gap = cfg.gap || 2;
+  let bodyW, bodyH;
+  if (dir === '1row') { bodyW = n - 1; bodyH = 0; }
+  else if (dir === 'h') { const half = Math.ceil(n / 2); bodyW = gap; bodyH = half - 1; }
+  else { const half = Math.ceil(n / 2); bodyW = half - 1; bodyH = gap; }
+  return { c, r, bodyW, bodyH, pins: n, dir, gap, label: cfg.label, color: cfg.color };
+}
+
+function drawComponents() {
+  components.forEach(co => {
+    const pins = compPins(co);
+    const dir = co.dir, gap = co.gap || 2;
+    let bx, by, bw, bh;
+    const pad = CELL * 0.15;
+    if (dir === '1row') {
+      bx = co.c * CELL + pad; by = co.r * CELL - CELL * 0.5;
+      bw = (co.bodyW + 1) * CELL - pad * 2; bh = CELL;
+    } else if (dir === 'h') {
+      bx = co.c * CELL + CELL + pad; by = co.r * CELL + pad;
+      bw = gap * CELL - pad * 2; bh = (co.bodyH + 1) * CELL - pad * 2;
+    } else {
+      bx = co.c * CELL + pad; by = co.r * CELL + CELL + pad;
+      bw = (co.bodyW + 1) * CELL - pad * 2; bh = gap * CELL - pad * 2;
+    }
+
+    ctx.save();
+    ctx.fillStyle = co.color;
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 3);
+    ctx.fill(); ctx.stroke();
+
+    const fs = Math.max(6, Math.min(CELL * 0.45, 11));
+    ctx.fillStyle = '#fff';
+    ctx.font = `600 ${fs}px 'DM Mono',monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(co.label, bx + bw / 2, by + bh / 2);
+
+    pins.forEach((pin, idx) => {
+      const { x, y } = hp(pin.c, pin.r);
+      ctx.beginPath(); ctx.arc(x, y, Math.max(2, CELL * 0.2), 0, Math.PI * 2);
+      ctx.fillStyle = '#c8a84b'; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, Math.max(1, CELL * 0.1), 0, Math.PI * 2);
+      ctx.fillStyle = '#0a3018'; ctx.fill();
+
+      if (CELL >= 14) {
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.font = `${Math.max(5, CELL * 0.28)}px 'DM Mono',monospace`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(pin.num, x, y - CELL * 0.32);
+      }
+    });
+
+    ctx.restore();
+  });
+}
+
+function componentHitTest(hole) {
+  return components.findIndex(co => {
+    const pins = compPins(co);
+    if (pins.some(p => p.c === hole.c && p.r === hole.r)) return true;
+    const gap = co.gap || 2;
+    if (co.dir === '1row') return hole.c >= co.c && hole.c <= co.c + co.bodyW && hole.r === co.r;
+    if (co.dir === 'h') return hole.c >= co.c && hole.c <= co.c + gap + 1 && hole.r >= co.r && hole.r <= co.r + co.bodyH;
+    return hole.c >= co.c && hole.c <= co.c + co.bodyW && hole.r >= co.r && hole.r <= co.r + gap + 1;
+  });
+}
+
+function drawCompPreviewOnCanvas(hole) {
+  if (!hole) return;
+  const cfg = getCompConfig();
+  const co = compBounds(cfg, hole.c, hole.r);
+  const pins = compPins(co);
+  ctx.save(); ctx.globalAlpha = 0.45;
+  pins.forEach(pin => {
+    const { x, y } = hp(pin.c, pin.r);
+    ctx.beginPath(); ctx.arc(x, y, Math.max(2, CELL * 0.2), 0, Math.PI * 2);
+    ctx.fillStyle = cfg.color; ctx.fill();
+  });
+  ctx.restore();
+}
+
+function placeComponent(hole) {
+  const cfg = getCompConfig();
+  const co = compBounds(cfg, hole.c, hole.r);
+  const ex = componentHitTest(hole);
+  if (ex >= 0) return; // al bezet, niet verwijderen
+  history.push({ type: 'component', data: co });
+  components.push(co);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBoard();
+  islands.forEach(isl => drawIslandShape(isl, 0.85));
+  wires.forEach(w => drawWire(w, false));
+  drawComponents();
+
+  if (tool === 'wire' && drawing && startHole && mouseHole) {
+    drawWire({ c1: startHole.c, r1: startHole.r, c2: mouseHole.c, r2: mouseHole.r, color: activeColor, width: wireWidth }, true);
+  }
+
+  if (tool === 'island' && drawing && startHole && mouseHole) {
+    const ir = islandRect(startHole.c, startHole.r, mouseHole.c, mouseHole.r);
+    drawIslandShape({ ...ir, color: activeColor }, 0.4);
+    const pad = Math.max(1, CELL * 0.08);
+    const x = ir.c * CELL + pad, y = ir.r * CELL + pad;
+    const pw = ir.w * CELL - pad * 2, ph = ir.h * CELL - pad * 2;
+    ctx.save();
+    ctx.strokeStyle = activeColor; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.roundRect(x, y, pw, ph, 3); ctx.stroke();
+    ctx.restore();
+    const lbl = `${ir.w}×${ir.h}`;
+    const cx = ir.c * CELL + ir.w * CELL / 2, cy = ir.r * CELL + ir.h * CELL / 2;
+    ctx.save();
+    ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.9;
+    ctx.font = `600 ${Math.max(9, CELL * 0.42)}px 'DM Mono', monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(lbl, cx, cy);
+    ctx.restore();
+  }
+
+  if (tool === 'island' && !drawing && mouseHole) {
+    const { x, y } = hp(mouseHole.c, mouseHole.r);
+    ctx.save();
+    ctx.strokeStyle = activeColor; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.45;
+    ctx.setLineDash([3, 3]);
+    const s = CELL * 0.5;
+    ctx.beginPath(); ctx.rect(x - s, y - s, s * 2, s * 2); ctx.stroke();
+    ctx.restore();
+  }
+
+  if (tool === 'comp' && mouseHole) drawCompPreviewOnCanvas(mouseHole);
+
+  if (tool === 'wire' && mouseHole && !drawing && !draggingComp) {
+    const idx = componentHitTest(mouseHole);
+    canvas.style.cursor = idx >= 0 ? 'grab' : 'crosshair';
+  } else if (!draggingComp) {
+    canvas.style.cursor = 'crosshair';
+  }
+
+  if (!mouseHole || tool === 'island' || tool === 'comp') return;
+  const { x: hx, y: hy } = hp(mouseHole.c, mouseHole.r);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(hx, hy, Math.max(3, CELL * 0.26) + 3, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHoverHole() {}
+
+function onSeg(p, a, b, tol) {
+  const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(p.x - a.x, p.y - a.y) < tol;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy) < tol;
+}
+
+function eraseAt(hole) {
+  wires = wires.filter(w => {
+    const a = hp(w.c1, w.r1), b = hp(w.c2, w.r2), h = hp(hole.c, hole.r);
+    return !onSeg(h, a, b, w.width + 8);
+  });
+  islands = islands.filter(isl => !(hole.c >= isl.c && hole.c < isl.c + isl.w && hole.r >= isl.r && hole.r < isl.r + isl.h));
+  components = components.filter(co => {
+    const pins = compPins(co);
+    if (pins.some(p => p.c === hole.c && p.r === hole.r)) return false;
+    if (co.dir === '1row') return !(hole.c >= co.c && hole.c <= co.c + co.bodyW && hole.r === co.r);
+    if (co.dir === 'h') return !(hole.c >= co.c && hole.c <= co.c + co.bodyW + 1 && hole.r >= co.r && hole.r <= co.r + co.bodyH);
+    return !(hole.c >= co.c && hole.c <= co.c + co.bodyW && hole.r >= co.r && hole.r <= co.r + co.bodyH + 1);
+  });
+}
+
+
+
+let draggingComp = null;   // component being dragged
+let dragOffC = 0, dragOffR = 0; // offset from comp origin to click hole
+
+function handleDown(e) {
+  const { px, py } = evPos(e);
+  const hole = nearHole(px, py);
+  mouseHole = hole;
+
+  if (tool === 'erase') { drawing = true; eraseAt(hole); render(); return; }
+  if (tool === 'comp') { placeComponent(hole); render(); return; }
+
+  // On wire/island tool: check if clicking an existing component → start drag
+  if (tool === 'wire' || tool === 'island') {
+    const idx = componentHitTest(hole);
+    if (idx >= 0 && tool === 'wire') {
+      draggingComp = components[idx];
+      dragOffC = hole.c - draggingComp.c;
+      dragOffR = hole.r - draggingComp.r;
+      canvas.style.cursor = 'grabbing';
+      render(); return;
+    }
+  }
+
+  drawing = true; startHole = hole;
+  render();
+}
+
+function handleMove(e) {
+  const { px, py } = evPos(e);
+  mouseHole = nearHole(px, py);
+
+  if (draggingComp) {
+    draggingComp.c = Math.max(0, mouseHole.c - dragOffC);
+    draggingComp.r = Math.max(0, mouseHole.r - dragOffR);
+    render(); return;
+  }
+
+  if (tool === 'erase' && drawing) eraseAt(mouseHole);
+  render();
+}
+
+function handleUp(e) {
+  const { px, py } = evPos(e);
+  const hole = nearHole(px, py);
+  mouseHole = hole;
+
+  if (draggingComp) {
+    draggingComp.c = Math.max(0, hole.c - dragOffC);
+    draggingComp.r = Math.max(0, hole.r - dragOffR);
+    draggingComp = null;
+    canvas.style.cursor = 'crosshair';
+    render(); return;
+  }
+
+  if (tool === 'wire' && drawing && startHole && (startHole.c !== hole.c || startHole.r !== hole.r)) {
+    const w = { c1: startHole.c, r1: startHole.r, c2: hole.c, r2: hole.r, color: activeColor, width: wireWidth };
+    history.push({ type: 'wire', data: w }); wires.push(w);
+  }
+  if (tool === 'island' && drawing && startHole) {
+    const ir = islandRect(startHole.c, startHole.r, hole.c, hole.r);
+    islands = islands.filter(ex => !(ir.c < ex.c + ex.w && ir.c + ir.w > ex.c && ir.r < ex.r + ex.h && ir.r + ir.h > ex.r));
+    const isl = { ...ir, color: activeColor };
+    history.push({ type: 'island', data: isl }); islands.push(isl);
+  }
+  drawing = false; startHole = null; render();
+}
+
+canvas.addEventListener('mousedown', handleDown);
+canvas.addEventListener('mousemove', handleMove);
+canvas.addEventListener('mouseup', handleUp);
+canvas.addEventListener('mouseleave', () => { mouseHole = null; drawing = false; startHole = null; draggingComp = null; canvas.style.cursor = 'crosshair'; render(); });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); handleDown(e); }, { passive: false });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); handleMove(e); }, { passive: false });
+canvas.addEventListener('touchend', e => { e.preventDefault(); handleUp(e); }, { passive: false });
+
+function setTool(t) {
+  tool = t;
+  ['wire', 'island', 'comp', 'erase'].forEach(id => {
+    const el = document.getElementById('btn-' + id);
+    if (el) el.classList.toggle('active', id === t);
+  });
+  const msgs = {
+    wire: 'Sleep van gaatje naar gaatje om een baan te trekken. Sleep over een component om hem te verplaatsen.',
+    island: 'Klik en sleep om een koperen eiland te tekenen. Grootte zie je live.',
+    comp: 'Klik op een gaatje om een component te plaatsen. Opnieuw klikken verwijdert.',
+    erase: 'Klik of sleep om banen, eilanden of componenten te wissen.'
+  };
+  document.getElementById('status').textContent = msgs[t] || '';
+}
+
+document.getElementById('btn-wire').onclick = () => setTool('wire');
+document.getElementById('btn-island').onclick = () => setTool('island');
+document.getElementById('btn-comp').onclick = () => setTool('comp');
+document.getElementById('btn-erase').onclick = () => setTool('erase');
+
+document.querySelectorAll('.colbtn[data-col]').forEach(btn => {
+  btn.onclick = () => {
+    activeColor = btn.dataset.col;
+    document.querySelectorAll('.colbtn[data-col]').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  };
+});
+
+document.getElementById('wire-width').onchange = e => wireWidth = parseInt(e.target.value);
+
+document.getElementById('btn-apply').onclick = () => {
+  const nc = parseInt(document.getElementById('inp-cols').value);
+  const nr = parseInt(document.getElementById('inp-rows').value);
+  if (nc >= 5 && nc <= 60 && nr >= 5 && nr <= 40) {
+    COLS = nc; ROWS = nr;
+    wires = []; islands = []; components = []; history = [];
+    resize();
+  }
+};
+
+document.getElementById('btn-undo').onclick = () => {
+  if (!history.length) return;
+  const last = history.pop();
+  if (last.type === 'wire') { const d = last.data; wires = wires.filter(w => !(w.c1 === d.c1 && w.r1 === d.r1 && w.c2 === d.c2 && w.r2 === d.r2)); }
+  else if (last.type === 'island') { const d = last.data; islands = islands.filter(i => !(i.c === d.c && i.r === d.r && i.w === d.w && i.h === d.h)); }
+  else if (last.type === 'component') { const d = last.data; components = components.filter(co => !(co.c === d.c && co.r === d.r)); }
+  else if (last.type === 'del-component') { components.push(last.data); }
+  render();
+};
+
+document.getElementById('btn-clear').onclick = () => {
+  if (confirm('Alles wissen van de printplaat?')) { wires = []; islands = []; components = []; history = []; render(); }
+};
+
+// ── Footprint bibliotheek ────────────────────────────────────────────────
+const FOOTPRINTS = {
+  ic: [
+    { name:'NE555',   label:'555',    pins:8,  dir:'h', gap:2, color:'#2c3e50', desc:'Timer IC' },
+    { name:'LM741',   label:'741',    pins:8,  dir:'h', gap:2, color:'#2c3e50', desc:'Op-amp' },
+    { name:'LM358',   label:'358',    pins:8,  dir:'h', gap:2, color:'#2c3e50', desc:'Dual op-amp' },
+    { name:'74HC00',  label:'74HC00', pins:14, dir:'h', gap:2, color:'#2c3e50', desc:'Quad NAND' },
+    { name:'74HC04',  label:'74HC04', pins:14, dir:'h', gap:2, color:'#2c3e50', desc:'Hex inverter' },
+    { name:'74HC74',  label:'74HC74', pins:14, dir:'h', gap:2, color:'#2c3e50', desc:'Dual D flip-flop' },
+    { name:'74HC595', label:'595',    pins:16, dir:'h', gap:2, color:'#2c3e50', desc:'Shift register' },
+    { name:'CD4017',  label:'4017',   pins:16, dir:'h', gap:2, color:'#2c3e50', desc:'Decade counter' },
+    { name:'LM386',   label:'386',    pins:8,  dir:'h', gap:2, color:'#2c3e50', desc:'Audio versterker' },
+    { name:'LM317',   label:'317',    pins:3,  dir:'1row', gap:1, color:'#16a085', desc:'Regelbare spanningsregelaar' },
+    { name:'LM7805',  label:'7805',   pins:3,  dir:'1row', gap:1, color:'#16a085', desc:'5V spanningsregelaar' },
+    { name:'LM7812',  label:'7812',   pins:3,  dir:'1row', gap:1, color:'#16a085', desc:'12V spanningsregelaar' },
+  ],
+  passive: [
+    { name:'Weerstand',    label:'R',   pins:2,  dir:'1row', gap:3, color:'#d35400', desc:'Weerstand (axiaal)' },
+    { name:'Condensator',  label:'C',   pins:2,  dir:'1row', gap:1, color:'#c0392b', desc:'Condensator (axiaal)' },
+    { name:'Elco',         label:'C+',  pins:2,  dir:'1row', gap:1, color:'#c0392b', desc:'Elektrolytische condensator' },
+    { name:'Spoel',        label:'L',   pins:2,  dir:'1row', gap:2, color:'#8e44ad', desc:'Spoel / inductor' },
+    { name:'Kristal',      label:'XTAL',pins:2,  dir:'1row', gap:2, color:'#7f8c8d', desc:'Kwartskristal' },
+    { name:'Diode',        label:'D',   pins:2,  dir:'1row', gap:2, color:'#8e44ad', desc:'Gelijkrichterdiode' },
+    { name:'LED',          label:'LED', pins:2,  dir:'1row', gap:1, color:'#e74c3c', desc:'LED' },
+    { name:'Zenerdiode',   label:'ZD',  pins:2,  dir:'1row', gap:2, color:'#8e44ad', desc:'Zenerdiode' },
+    { name:'Trimmer',      label:'RV',  pins:3,  dir:'1row', gap:1, color:'#d35400', desc:'Instelbare weerstand' },
+    { name:'Potmeter',     label:'POT', pins:3,  dir:'1row', gap:2, color:'#d35400', desc:'Potmeter' },
+  ],
+  transistor: [
+    { name:'BC547',  label:'BC547', pins:3, dir:'1row', gap:1, color:'#16a085', desc:'NPN transistor' },
+    { name:'BC557',  label:'BC557', pins:3, dir:'1row', gap:1, color:'#16a085', desc:'PNP transistor' },
+    { name:'2N2222', label:'2N2222',pins:3, dir:'1row', gap:1, color:'#16a085', desc:'NPN transistor' },
+    { name:'2N3906', label:'2N3906',pins:3, dir:'1row', gap:1, color:'#16a085', desc:'PNP transistor' },
+    { name:'BC337',  label:'BC337', pins:3, dir:'1row', gap:1, color:'#16a085', desc:'NPN med. stroom' },
+    { name:'TIP31',  label:'TIP31', pins:3, dir:'1row', gap:1, color:'#16a085', desc:'NPN power transistor' },
+    { name:'TIP32',  label:'TIP32', pins:3, dir:'1row', gap:1, color:'#16a085', desc:'PNP power transistor' },
+    { name:'IRF540', label:'IRF540',pins:3, dir:'1row', gap:1, color:'#27ae60', desc:'N-channel MOSFET' },
+    { name:'IRF9540',label:'IRF9540',pins:3,dir:'1row', gap:1, color:'#27ae60', desc:'P-channel MOSFET' },
+  ],
+  connector: [
+    { name:'1×2 Pin',  label:'CON2', pins:2,  dir:'1row', gap:1, color:'#7f8c8d', desc:'2-pins connector' },
+    { name:'1×3 Pin',  label:'CON3', pins:3,  dir:'1row', gap:1, color:'#7f8c8d', desc:'3-pins connector' },
+    { name:'1×4 Pin',  label:'CON4', pins:4,  dir:'1row', gap:1, color:'#7f8c8d', desc:'4-pins connector' },
+    { name:'1×6 Pin',  label:'CON6', pins:6,  dir:'1row', gap:1, color:'#7f8c8d', desc:'6-pins connector' },
+    { name:'1×8 Pin',  label:'CON8', pins:8,  dir:'1row', gap:1, color:'#7f8c8d', desc:'8-pins connector' },
+    { name:'2×3 Pin',  label:'IDC6', pins:6,  dir:'h',    gap:1, color:'#7f8c8d', desc:'6-pins IDC' },
+    { name:'2×5 Pin',  label:'IDC10',pins:10, dir:'h',    gap:1, color:'#7f8c8d', desc:'10-pins IDC' },
+    { name:'2×8 Pin',  label:'IDC16',pins:16, dir:'h',    gap:1, color:'#7f8c8d', desc:'16-pins IDC' },
+    { name:'USB-A',    label:'USB',  pins:4,  dir:'1row', gap:2, color:'#2980b9', desc:'USB type-A' },
+    { name:'DC Jack',  label:'DC',   pins:3,  dir:'1row', gap:1, color:'#2980b9', desc:'DC voedingsconnector' },
+    { name:'Audio 3.5',label:'JACK', pins:3,  dir:'1row', gap:1, color:'#2980b9', desc:'3.5mm audio jack' },
+  ],
+  power: [
+    { name:'L7805',   label:'7805',  pins:3, dir:'1row', gap:1, color:'#c0392b', desc:'5V regelaar (TO-220)' },
+    { name:'L7812',   label:'7812',  pins:3, dir:'1row', gap:1, color:'#c0392b', desc:'12V regelaar (TO-220)' },
+    { name:'LM317T',  label:'317',   pins:3, dir:'1row', gap:1, color:'#c0392b', desc:'Regelbare regelaar' },
+    { name:'7-seg',   label:'7SEG',  pins:10,dir:'h',    gap:3, color:'#e74c3c', desc:'7-segment display' },
+    { name:'Brug gelijkrichter', label:'BR', pins:4, dir:'h', gap:2, color:'#8e44ad', desc:'Bruggelijkrichter' },
+    { name:'Relais',  label:'REL',   pins:5, dir:'h',    gap:3, color:'#2c3e50', desc:'5V relais' },
+    { name:'Buzzer',  label:'BZ',    pins:2, dir:'1row', gap:1, color:'#e67e22', desc:'Zoemer' },
+  ],
+  mcu: [
+    { name:'ATmega328', label:'328P', pins:28, dir:'h', gap:4, color:'#2c3e50', desc:'ATmega328P (Arduino UNO chip)' },
+    { name:'ATmega168', label:'168',  pins:28, dir:'h', gap:4, color:'#2c3e50', desc:'ATmega168' },
+    { name:'ATtiny85',  label:'t85',  pins:8,  dir:'h', gap:2, color:'#2c3e50', desc:'ATtiny85' },
+    { name:'ATtiny84',  label:'t84',  pins:14, dir:'h', gap:2, color:'#2c3e50', desc:'ATtiny84' },
+    { name:'PIC16F628', label:'628',  pins:18, dir:'h', gap:3, color:'#8e44ad', desc:'PIC16F628A' },
+    { name:'ESP-01',    label:'ESP01',pins:8,  dir:'h', gap:3, color:'#27ae60', desc:'ESP8266 ESP-01 module' },
+    { name:'Arduino Nano hdr', label:'NANO', pins:30, dir:'h', gap:8, color:'#27ae60', desc:'Arduino Nano headers (15+15)' },
+    { name:'Arduino UNO hdr', label:'UNO',  pins:32, dir:'h', gap:10,color:'#27ae60', desc:'Arduino UNO headers' },
+  ]
+};
+
+let activeCat = 'ic';
+
+let fpEditIdx = null; // index in FOOTPRINTS[activeCat] being edited
+
+function renderFootprintList() {
+  const list = document.getElementById('fp-list');
+  list.innerHTML = '';
+
+  // "Nieuw" knop bovenaan
+  const addBtn = document.createElement('button');
+  addBtn.style.cssText = 'font-size:11px;padding:4px 8px;border-color:rgba(74,222,128,0.4);color:var(--green);';
+  addBtn.textContent = '+ Nieuw';
+  addBtn.onclick = () => openModal(null);
+  list.appendChild(addBtn);
+
+  (FOOTPRINTS[activeCat] || []).forEach((fp, idx) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:stretch;gap:0;border:1px solid var(--border2);border-radius:5px;overflow:hidden;';
+
+    const btn = document.createElement('button');
+    btn.style.cssText = 'font-size:11px;padding:4px 8px;flex-direction:column;align-items:flex-start;gap:1px;border:none;border-radius:0;flex:1;';
+    btn.innerHTML = `<span style="font-weight:700;color:var(--green)">${fp.name}</span><span style="font-size:9px;color:var(--text-muted)">${fp.desc}</span>`;
+    btn.onclick = () => loadFootprint(fp);
+
+    const editBtn = document.createElement('button');
+    editBtn.style.cssText = 'font-size:11px;padding:4px 7px;border:none;border-left:1px solid var(--border2);border-radius:0;color:var(--text-muted);';
+    editBtn.textContent = '✎';
+    editBtn.title = 'Bewerken';
+    editBtn.onclick = (e) => { e.stopPropagation(); openModal(idx); };
+
+    wrap.appendChild(btn);
+    wrap.appendChild(editBtn);
+    list.appendChild(wrap);
+  });
+}
+
+function openModal(idx) {
+  fpEditIdx = idx;
+  const modal = document.getElementById('fp-modal');
+  const fp = idx !== null ? FOOTPRINTS[activeCat][idx] : { name:'', label:'', desc:'', pins:2, dir:'1row', gap:1, color:'#d35400' };
+  document.getElementById('fp-modal-title').textContent = idx !== null ? `Bewerken: ${fp.name}` : 'Nieuwe footprint';
+  document.getElementById('fp-edit-name').value  = fp.name;
+  document.getElementById('fp-edit-label').value = fp.label;
+  document.getElementById('fp-edit-desc').value  = fp.desc;
+  document.getElementById('fp-edit-pins').value  = fp.pins;
+  document.getElementById('fp-edit-dir').value   = fp.dir;
+  document.getElementById('fp-edit-gap').value   = fp.gap;
+  document.getElementById('fp-edit-color').value = fp.color;
+  document.getElementById('fp-modal-delete').style.display = idx !== null ? 'flex' : 'none';
+  modal.style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('fp-modal').style.display = 'none';
+}
+
+document.getElementById('fp-modal-close').onclick  = closeModal;
+document.getElementById('fp-modal-cancel').onclick = closeModal;
+
+document.getElementById('fp-modal-save').onclick = () => {
+  const fp = {
+    name:  document.getElementById('fp-edit-name').value  || 'Nieuw',
+    label: document.getElementById('fp-edit-label').value || '?',
+    desc:  document.getElementById('fp-edit-desc').value,
+    pins:  Math.max(1, parseInt(document.getElementById('fp-edit-pins').value) || 2),
+    dir:   document.getElementById('fp-edit-dir').value,
+    gap:   Math.max(1, parseInt(document.getElementById('fp-edit-gap').value) || 1),
+    color: document.getElementById('fp-edit-color').value
+  };
+  if (!FOOTPRINTS[activeCat]) FOOTPRINTS[activeCat] = [];
+  if (fpEditIdx !== null) {
+    FOOTPRINTS[activeCat][fpEditIdx] = fp;
+  } else {
+    FOOTPRINTS[activeCat].push(fp);
+  }
+  closeModal();
+  renderFootprintList();
+};
+
+document.getElementById('fp-modal-delete').onclick = () => {
+  if (fpEditIdx !== null && confirm(`"${FOOTPRINTS[activeCat][fpEditIdx].name}" verwijderen?`)) {
+    FOOTPRINTS[activeCat].splice(fpEditIdx, 1);
+    closeModal();
+    renderFootprintList();
+  }
+};
+
+// Sluit modal bij klik buiten het venster
+document.getElementById('fp-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('fp-modal')) closeModal();
+});
+
+
+function loadFootprint(fp) {
+  document.getElementById('comp-label').value = fp.label;
+  document.getElementById('comp-pins').value = fp.pins;
+  document.getElementById('comp-dir').value = fp.dir;
+  document.getElementById('comp-gap').value = fp.gap;
+  document.getElementById('comp-color').value = fp.color;
+  // Sync kleur knop
+  document.querySelectorAll('.colbtn[data-col]').forEach(b => b.classList.remove('sel'));
+  updateCompPreview();
+  setTool('comp');
+  document.getElementById('status').textContent = `Footprint "${fp.name}" geladen — klik op de printplaat om te plaatsen.`;
+}
+
+document.querySelectorAll('.fp-cat').forEach(btn => {
+  btn.onclick = () => {
+    activeCat = btn.dataset.cat;
+    document.querySelectorAll('.fp-cat').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFootprintList();
+  };
+});
+
+renderFootprintList();
+
+resize();
+updateCompPreview();
+
+// ── Toetsenbord sneltoetsen ──────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Negeer als gebruiker in een tekstveld typt
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+  const key = e.key.toLowerCase();
+
+  // Tools
+  if (key === 'w') setTool('wire');
+  if (key === 'i') setTool('island');
+  if (key === 'c') setTool('comp');
+  if (key === 'e') setTool('erase');
+
+  // Undo: Ctrl+Z
+  if (key === 'z' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    document.getElementById('btn-undo').click();
+  }
+
+  // Kleur sneltoetsen 1-7
+  const colorMap = {
+    '1': '#e74c3c', '2': '#3498db', '3': '#f1c40f',
+    '4': '#2ecc71', '5': '#e67e22', '6': '#ecf0f1', '7': '#9b59b6'
+  };
+  if (colorMap[e.key]) {
+    activeColor = colorMap[e.key];
+    document.querySelectorAll('.colbtn[data-col]').forEach(b => {
+      b.classList.toggle('sel', b.dataset.col === activeColor);
+    });
+  }
+
+  // Dikte: - en +
+  if (key === '-') {
+    const sel = document.getElementById('wire-width');
+    const opts = [...sel.options];
+    const idx = opts.findIndex(o => o.selected);
+    if (idx > 0) { sel.selectedIndex = idx - 1; wireWidth = parseInt(sel.value); }
+  }
+  if (key === '+' || key === '=') {
+    const sel = document.getElementById('wire-width');
+    const opts = [...sel.options];
+    const idx = opts.findIndex(o => o.selected);
+    if (idx < opts.length - 1) { sel.selectedIndex = idx + 1; wireWidth = parseInt(sel.value); }
+  }
+
+  // Roteer component: R
+  if (key === 'r') {
+    const sel = document.getElementById('comp-dir');
+    const cycle = ['h', 'v', '1row'];
+    const idx = cycle.indexOf(sel.value);
+    sel.value = cycle[(idx + 1) % cycle.length];
+    updateCompPreview();
+    // Als een component versleept wordt, roteer hem live
+    if (draggingComp) {
+      const dirCycle = ['h', 'v', '1row'];
+      const di = dirCycle.indexOf(draggingComp.dir);
+      const newDir = dirCycle[(di + 1) % dirCycle.length];
+      const cfg = getCompConfig();
+      const updated = compBounds({ ...cfg, dir: newDir }, draggingComp.c, draggingComp.r);
+      Object.assign(draggingComp, updated);
+      render();
+    }
+  }
+  if (key === 'escape') {
+    drawing = false; startHole = null; draggingComp = null;
+    canvas.style.cursor = 'crosshair';
+    render();
+  }
+});
+
+</script>
+</body>
+</html>
