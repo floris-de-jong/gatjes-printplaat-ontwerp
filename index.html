@@ -378,6 +378,8 @@
 </div>
 
 <script>
+let COLS = 30, ROWS = 20, CELL = 22;
+
 const canvas = document.getElementById('pcb');
 const ctx = canvas.getContext('2d');
 
@@ -601,7 +603,7 @@ function placeComponent(hole) {
   const cfg = getCompConfig();
   const co = compBounds(cfg, hole.c, hole.r);
   const ex = componentHitTest(hole);
-  if (ex >= 0) { history.push({ type: 'del-component', data: components[ex] }); components.splice(ex, 1); return; }
+  if (ex >= 0) return; // al bezet, niet verwijderen
   history.push({ type: 'component', data: co });
   components.push(co);
 }
@@ -1084,64 +1086,5 @@ document.addEventListener('keydown', e => {
 });
 
 </script>
-<!-- Footprint bewerk-modal -->
-<div id="fp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:340px;max-width:95vw;display:flex;flex-direction:column;gap:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;" id="fp-modal-title">Footprint bewerken</span>
-      <button id="fp-modal-close" style="padding:2px 8px;font-size:14px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Naam</label>
-        <input type="text" id="fp-edit-name" maxlength="20" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Label</label>
-        <input type="text" id="fp-edit-label" maxlength="8" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Beschrijving</label>
-        <input type="text" id="fp-edit-desc" maxlength="40" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Pinnen</label>
-        <input type="number" id="fp-edit-pins" min="1" max="64" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Richting</label>
-        <select id="fp-edit-dir" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-          <option value="h">Horizontaal (links/rechts)</option>
-          <option value="v">Verticaal (boven/onder)</option>
-          <option value="1row">1 rij (enkelvoudig)</option>
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Afstand</label>
-        <input type="number" id="fp-edit-gap" min="1" max="20" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);">gaatjes</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:80px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">Kleur</label>
-        <select id="fp-edit-color" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;padding:4px 7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2);color:var(--text);">
-          <option value="#2c3e50">Donkerblauw (IC)</option>
-          <option value="#8e44ad">Paars (module)</option>
-          <option value="#16a085">Groen (transistor)</option>
-          <option value="#c0392b">Rood (condensator)</option>
-          <option value="#d35400">Oranje (weerstand)</option>
-          <option value="#7f8c8d">Grijs (connector)</option>
-          <option value="#27ae60">Groen (MCU/module)</option>
-          <option value="#2980b9">Blauw (connector)</option>
-          <option value="#e74c3c">Rood (LED/diode)</option>
-          <option value="#e67e22">Oranje</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-      <button id="fp-modal-delete" class="danger" style="margin-right:auto;">✕ Verwijder</button>
-      <button id="fp-modal-cancel">Annuleer</button>
-      <button id="fp-modal-save" style="background:var(--green);color:#0f1a13;border-color:var(--green);font-weight:700;">✓ Opslaan</button>
-    </div>
-  </div>
-</div>
-
+</body>
+</html>
